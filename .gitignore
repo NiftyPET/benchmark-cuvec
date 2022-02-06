@@ -1,0 +1,3 @@
+*.py[co]
+*.cprof
+__pycache__/
