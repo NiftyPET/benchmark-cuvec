@@ -3,6 +3,7 @@
 
 Options:
   -c, --cuvec  : Whether to run new CuVec version.
+  -n N, --nitr N  : Number of OSEM iterations [default: 6:int].
 
 Arguments:
   <folderin>  : Input directory [default: Ab_PET_mMR_test].
@@ -23,11 +24,12 @@ except ImportError:
     cu = None
 
 
-def run_noncu(recdat, nitr=4):
+def run_noncu(recdat, nitr=6):
     # reconstructed image
     y = np.ones_like(recdat['isen'][0])
-    tic = time()
+    t = []
     for _ in trange(nitr, desc="OSEM"):
+        t.append(time())
         for n in trange(recdat['Sn'], unit="subset", leave=False):
             # forward-project current reconstruction to sinogram space
             Xy = nipet.frwd_prj(y, recdat['params'], isub=recdat['sidx'][n], attenuation=False,
@@ -40,16 +42,18 @@ def run_noncu(recdat, nitr=4):
             bim = nipet.back_prj(crr, recdat['params'], isub=recdat['sidx'][n], dev_out=True)
             # update image
             y *= bim * recdat['isen'][n]
-    return y, time() - tic
+    t.append(time())
+    return y, np.asarray(t)
 
 
-def run_cuvec(recdat, nitr=4, sync=False):
+def run_cuvec(recdat, nitr=6, sync=False):
     # reconstructed image
     y = cu.ones_like(recdat['isen'][0])
-    tic = time()
+    t = []
     # temporary variables
     Xy, crr, bim, mul = (None,) * 4
     for _ in trange(nitr, desc="OSEM"):
+        t.append(time())
         for n in trange(recdat['Sn'], unit="subset", leave=False):
             # forward-project current reconstruction to sinogram space
             Xy = nipet.frwd_prj(y, recdat['params'], isub=recdat['sidx'][n], attenuation=False,
@@ -66,7 +70,8 @@ def run_cuvec(recdat, nitr=4, sync=False):
             # update reconstructed image
             y = nimpa.mul(y, mul, output=y, sync=sync)
     cu.dev_sync()
-    return y, time() - tic
+    t.append(time())
+    return y, np.asarray(t)
 
 
 def prepare_data(folderin, opth, cuvec=True):
@@ -159,8 +164,7 @@ if __name__ == '__main__':
     # plt.matshow(np.sum(recdat['isen'], axis=(0,3)))
     # plt.matshow(recdat['eim'][60,...])
     # plt.matshow(recdat['mu'][60,...])
-    y, dt = (run_cuvec if args.cuvec else run_noncu)(recdat)
-    print(f"Time elapsed:{dt:.3f}s")
-    # import cProfile
-    # cProfile.run('ycu, dt = run_cuvec()')
-    # cProfile.run('y, dt = run_noncu()')
+    y, t = (run_cuvec if args.cuvec else run_noncu)(recdat, nitr=args.nitr)
+    dt = t[1:] - t[:-1]
+    # including unbiased standard error of the sum
+    print(f"Time elapsed:{np.sum(dt):.3f}±{np.sqrt(np.var(dt, ddof=1)*len(dt)):.3f}s")
