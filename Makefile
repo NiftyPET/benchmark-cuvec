@@ -14,6 +14,7 @@ new.%: NIPET=devel
 
 .PHONY: old.setup new.setup
 %.setup:
+	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install argopt tqdm
 	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+file://$$HOME/gits/ninst/.git@$(NINST)#egg=ninst"
 	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+file://$$HOME/gits/nimpa/.git@$(NIMPA)#egg=nimpa"
 	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+file://$$HOME/gits/nipet/.git@$(NIPET)#egg=nipet"
