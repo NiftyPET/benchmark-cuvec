@@ -12,12 +12,13 @@ new.%: NINST=devel
 new.%: NIMPA=devel
 new.%: NIPET=devel
 
+ENV=PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" OMP_NUM_THREADS=1
 %.setup:
-	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install argopt tqdm
-	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+https://github.com/NiftyPET/NInst.git@$(NINST)#egg=ninst"
-	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+https://github.com/NiftyPET/NIMPA.git@$(NIMPA)#egg=nimpa"
-	PATHTOOLS="$(PATHTOOLS)" HMUDIR="$(HMUDIR)" $(PY) -m pip install "git+https://github.com/NiftyPET/NIPET.git@$(NIPET)#egg=nipet"
+	$(ENV) $(PY) -m pip install argopt tqdm
+	$(ENV) $(PY) -m pip install "git+https://github.com/NiftyPET/NInst.git@$(NINST)#egg=ninst"
+	$(ENV) $(PY) -m pip install "git+https://github.com/NiftyPET/NIMPA.git@$(NIMPA)#egg=nimpa"
+	$(ENV) $(PY) -m pip install "git+https://github.com/NiftyPET/NIPET.git@$(NIPET)#egg=nipet"
 old.cprof:
-	OMP_NUM_THREADS=1 $(PY) -m cProfile -o $@ benchmark.py $(DATA)
+	$(ENV) $(PY) -m cProfile -o $@ benchmark.py $(DATA)
 new.cprof:
-	OMP_NUM_THREADS=1 $(PY) -m cProfile -o $@ benchmark.py --cuvec $(DATA)
+	$(ENV) $(PY) -m cProfile -o $@ benchmark.py --cuvec $(DATA)
